@@ -1,22 +1,28 @@
-from torchvision.datasets import MNIST, EMNIST, FashionMNIST, VisionDataset
-from typing import Optional, List
+"""Module to filter the dataset based on the labels and threshold"""
+
+import importlib
+from typing import List, Optional
 
 import torch
+from torchvision.datasets import EMNIST
 
 
 class FilteredDataset:
     def __init__(
         self,
         root: str,
-        base_class: VisionDataset,
+        base_class: str,
         *args,
         threshold: int,
         labels: Optional[List[int]] = None,
         **kwargs,
     ):
+        module = importlib.import_module("torchvision.datasets")
+        base_class = getattr(module, base_class.upper())
         self.dataset = base_class(root, *args, **kwargs)
         self.labels = labels
         self.threshold = threshold
+        self.adjust_labels = lambda: None
         self._filter_data()
 
     def _filter_data(self):
@@ -40,13 +46,8 @@ class FilteredDataset:
         else:
             self.labels = list(range(len(self.dataset.classes)))
 
-        if hasattr(self, "adjust_labels") and callable(self.adjust_labels):
+        if self.adjust_labels is not None and callable(self.adjust_labels):
             self.adjust_labels()
-
-
-class FilteredMNIST(FilteredDataset):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, base_class=MNIST, **kwargs)
 
 
 class FilteredEMNIST(FilteredDataset):
@@ -57,8 +58,3 @@ class FilteredEMNIST(FilteredDataset):
     def _adjust_emnist_labels(self):
         self.labels = self.labels[:-1]
         self.dataset.targets = self.dataset.targets - 1
-
-
-class FilteredFashionMNIST(FilteredDataset):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, base_class=FashionMNIST, **kwargs)

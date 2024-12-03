@@ -1,8 +1,18 @@
-from typing import List
+"""This module contains utility functions and classes for the API"""
+
+import shutil
+import os
+import argparse
+
+from typing import List, Tuple
 from dataclasses import dataclass
 
-import os
-import torch.nn as nn
+import torch
+
+from PIL.Image import Image
+from diffusers.utils import make_image_grid
+
+from API.pipeline import DDPMConditionalPipeline
 
 
 @dataclass
@@ -86,45 +96,131 @@ class TestConfig:
         return os.path.join(self.root_dir, "datasets")
 
 
-def readMatrixFromFile(file_path: str) -> List[List[int]]:
+def read_matrix_from_file(file_path: str) -> List[List[int]]:
     matrix = []
-    with open(file_path, "r") as file:
+    with open(file_path, "r", encoding="utf-8") as file:
         for line in file:
             row = [int(num) for num in line.strip().split()]
             matrix.append(row)
     return matrix
 
 
-def extractNeighbours(file_path: str) -> List[List[bool]]:
-    matrix = readMatrixFromFile(file_path)
+def extract_neighbours(file_path: str) -> List[List[bool]]:
+    matrix = read_matrix_from_file(file_path)
     neighbours = []
-    for i in range(len(matrix)):
+    for i, row in enumerate(matrix):
         neighbour = [False] * len(matrix)
         neighbour[i] = True
-        for j in range(len(matrix[i])):
-            neighbour[matrix[i][j] - 1] = True
+        for j in row:
+            neighbour[j - 1] = True
         neighbours.append(neighbour)
 
     return neighbours
 
 
-def extractLabels(file_path: str) -> List[List[int]]:
-    return readMatrixFromFile(file_path)
+def extract_labels(file_path: str) -> List[List[int]]:
+    return read_matrix_from_file(file_path)
 
 
-class SimpleCNN(nn.Module):
-    def __init__(self, num_classes):
-        super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
-        self.fc1 = nn.Linear(64 * 7 * 7, 128)
-        self.fc2 = nn.Linear(128, num_classes)
+def reset(path: str):
+    for filename in os.scandir(path):
+        try:
+            if os.path.isfile(filename) or os.path.islink(filename):
+                os.unlink(filename)
+            elif os.path.isdir(filename):
+                print(f"Deleting directory {filename}")
+                shutil.rmtree(filename)
+        except OSError as e:
+            print(f"Failed to delete {filename}. Reason: {e}")
+    os.rmdir(path)
 
-    def forward(self, x):
-        x = self.pool(nn.functional.relu(self.conv1(x)))
-        x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 64 * 7 * 7)
-        x = nn.functional.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+
+def generate(
+    root: str,
+    labels: List[int],
+    device: str,
+    epoch: int,
+    index: int,
+    pipeline: DDPMConditionalPipeline,
+):
+    y = torch.tensor([label for label in labels]).flatten().to(device)
+    images = pipeline(y, y.size(0)).images
+
+    grid = make_image_grid(images, len(labels), 1)
+
+    sample(
+        root,
+        grid,
+        epoch + 1,
+        index,
+        str(labels[0]) + "-" + str(labels[-1]),
+    )
+
+
+def sample(root: str, grid: Image, epoch: int, index: int, name: str):
+    os.makedirs(root, exist_ok=True)
+    model_dir = os.path.join(root, f"model{index}")
+    os.makedirs(model_dir, exist_ok=True)
+    epoch_dir = os.path.join(model_dir, f"{epoch:02d}")
+    os.makedirs(epoch_dir, exist_ok=True)
+
+    grid.save(os.path.join(epoch_dir, name + "-sample.png"))
+
+
+def parse_args() -> Tuple[str, str, int, bool]:
+    parser = argparse.ArgumentParser(
+        description="Process arguments to execute the model"
+    )
+
+    parser.add_argument("dataset", type=str, help="Name of the dataset.")
+    parser.add_argument("topology", type=int, help="Network topology to use.")
+
+    parser.add_argument(
+        "--split",
+        type=str,
+        default=None,
+        help="Split of the dataset (e.g., 'letters').",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=int,
+        default=0,
+        help="Threshold for the shared labels strategy.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Indicates wether the previous results should be overwritten.",
+    )
+
+    args = parser.parse_args()
+
+    if args.dataset.lower() == "emnist" and not args.split:
+        parser.error(
+            "The argument '--split' is compulsory when the 'emnist' dataset is used."
+        )
+
+    if args.split and args.split not in ["mnist", "balanced", "letters", "digits"]:
+        raise ValueError("Invalid emnist split")
+
+    dataset = args.dataset.lower()
+
+    if dataset not in ["mnist", "fashionmnist", "emnist"]:
+        raise ValueError("Invalid dataset")
+
+    if args.split:
+        dataset += "_" + args.split
+
+    return dataset, args.topology, args.threshold, args.overwrite
+
+
+def format_time(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    remaining_seconds = seconds % 60
+
+    if hours > 0:
+        return f"{hours}h {minutes}m {remaining_seconds}s"
+    if minutes > 0:
+        return f"{minutes}m {remaining_seconds}s"
+    return f"{remaining_seconds}s"

@@ -1,3 +1,5 @@
+"""Pipeline for DDPM with conditional input"""
+
 from typing import List, Optional, Tuple, Union
 from diffusers import DiffusionPipeline, ImagePipelineOutput
 from diffusers.utils.torch_utils import randn_tensor

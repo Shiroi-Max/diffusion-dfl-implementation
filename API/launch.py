@@ -1,15 +1,17 @@
-from torchvision import transforms
+"""Launch module"""
+
 from abc import abstractmethod
-from typing import List, Optional, Callable
+from typing import Callable, List, Optional
+
+import PIL
+import torch
+from torchvision import transforms
+
+from API.dfl_ddpm import DecentralizedFLDDPM, NodeInfo
 from API.filtered_dataset import (
     FilteredDataset,
-    FilteredMNIST,
-    FilteredFashionMNIST,
     FilteredEMNIST,
 )
-from API.dfl_ddpm import run, NodeInfo
-
-import torch, PIL
 
 
 class Launch:
@@ -25,25 +27,40 @@ class Launch:
 
         self.train = self.list_neighbours is not None
 
-    def transformImage(self, image: PIL.Image.Image):
-        preprocessImage = transforms.Compose(
+    def _transform_image(self, image: PIL.Image.Image) -> torch.Tensor:
+        preprocess_image = transforms.Compose(
             [
                 transforms.Resize((self.config.image_size, self.config.image_size)),
                 transforms.ToTensor(),
             ]
         )
-        return preprocessImage(image).to(self.config.device)
+        return preprocess_image(image).to(self.config.device)
 
-    def transformTarget(self, target: int):
-        return torch.tensor(target, device="cuda")
+    def _transform_image(self, target: int) -> torch.Tensor:
+        return torch.tensor(target, device=self.config.device)
 
     @abstractmethod
-    def initDataSet(self, path: str, index: int = -1) -> FilteredDataset:
-        pass
+    def init_data_set(self, path: str, index: int = -1) -> FilteredDataset:
+        return FilteredDataset(
+            path,
+            base_class=self.config.dataset,
+            train=self.config.train,
+            download=True,
+            threshold=self.config.threshold,
+            labels=(
+                self.list_labels[index]
+                if index != -1
+                and len(self.list_labels) > 0
+                and len(self.list_labels[index]) > 0
+                else None
+            ),
+            transform=self._transform_image,
+            target_transform=self._transform_image,
+        )
 
-    def initNode(self, index: int = -1):
+    def _init_node(self, index: int = -1):
         return NodeInfo(
-            self.initDataSet(self.config.dataset_path, index).dataset,
+            self.init_data_set(self.config.dataset_path, index).dataset,
             self.list_neighbours[index] if index != -1 else None,
         )
 
@@ -51,52 +68,15 @@ class Launch:
         if not self.train:
             return
 
-        global_labels = self.initDataSet(self.config.dataset_path).labels
-        nodes_info = [self.initNode(i) for i in range(len(self.list_neighbours))]
+        global_labels = self.init_data_set(self.config.dataset_path).labels
+        nodes_info = [self._init_node(i) for i in range(len(self.list_neighbours))]
 
-        run(self.config, global_labels, nodes_info)
-
-
-class MNISTLaunch(Launch):
-    def initDataSet(self, path: str, index: int = -1) -> FilteredDataset:
-        return FilteredMNIST(
-            path,
-            train=self.config.train,
-            download=True,
-            threshold=self.config.threshold,
-            labels=(
-                self.list_labels[index]
-                if index != -1
-                and len(self.list_labels) > 0
-                and len(self.list_labels[index]) > 0
-                else None
-            ),
-            transform=self.transformImage,
-            target_transform=self.transformTarget,
-        )
-
-
-class FashionMNISTLaunch(Launch):
-    def initDataSet(self, path: str, index: int = -1) -> FilteredDataset:
-        return FilteredFashionMNIST(
-            path,
-            train=self.config.train,
-            download=True,
-            threshold=self.config.threshold,
-            labels=(
-                self.list_labels[index]
-                if index != -1
-                and len(self.list_labels) > 0
-                and len(self.list_labels[index]) > 0
-                else None
-            ),
-            transform=self.transformImage,
-            target_transform=self.transformTarget,
-        )
+        dfl_ddpm = DecentralizedFLDDPM(self.config, global_labels, nodes_info)
+        dfl_ddpm.run()
 
 
 class EMNISTLaunch(Launch):
-    def initDataSet(self, path: str, index: int = -1) -> FilteredDataset:
+    def init_data_set(self, path: str, index: int = -1) -> FilteredDataset:
         return FilteredEMNIST(
             path,
             split=self.config.dataset.split("_")[1],
@@ -110,29 +90,27 @@ class EMNISTLaunch(Launch):
                 and len(self.list_labels[index]) > 0
                 else None
             ),
-            transform=self.transformImage,
-            target_transform=self.transformTarget,
+            transform=self._transform_image,
+            target_transform=self._transform_image,
         )
 
-    def transformImage(self, image: PIL.Image.Image):
+    def _transform_image(self, image: PIL.Image.Image) -> torch.Tensor:
         extra_transforms = transforms.Compose(
             [
                 transforms.Lambda(lambda img: transforms.functional.rotate(img, -90)),
-                transforms.Lambda(lambda img: transforms.functional.hflip(img)),
+                transforms.RandomHorizontalFlip(p=1.0),
             ]
         )
         image = extra_transforms(image)
-        return super().transformImage(image)
+        return super()._transform_image(image)
 
 
-def getLaunch(dataset: str) -> Callable:
-    dataset_class_map = {
-        "mnist": MNISTLaunch,
+def get_launch(dataset: str) -> Callable:
+    complex_dataset_class_map = {
         "emnist": EMNISTLaunch,
-        "fashionmnist": FashionMNISTLaunch,
     }
 
-    launch_class = dataset_class_map.get(dataset)
+    launch_class = complex_dataset_class_map.get(dataset.split("_")[0])
     if not launch_class:
-        raise ValueError(f"Dataset {dataset} not supported")
+        return Launch
     return launch_class
