@@ -1,3 +1,7 @@
+laboratory/datasets/
+laboratory/scenarios/
+laboratory/evaluations/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
