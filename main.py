@@ -1,7 +1,6 @@
 """Main script to run the training of a model on a given dataset and topology"""
 
 import os
-import sys
 import time
 
 from API.launch import get_launch
@@ -29,7 +28,7 @@ def get_config(
         lr_warmup_steps=500,
         save_epochs=10,
         mixed_precision="fp16",
-        num_processes=1,
+        num_processes=2,
         device="cuda",
         overwrite_output_dir=overwrite_output_dir,
     )

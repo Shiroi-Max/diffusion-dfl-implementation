@@ -58,7 +58,7 @@ def main(config: TestConfig):
     if not os.path.isdir(config.input_dir):
         raise ValueError("Input directory does not exist")
 
-    launch_class = get_launch(sys.argv[1])
+    launch_class = get_launch(config.dataset)
     dataset_class = launch_class(config).init_data_set(config.dataset_path)
     labels = dataset_class.labels
     samples_per_label = config.samples // len(labels)
