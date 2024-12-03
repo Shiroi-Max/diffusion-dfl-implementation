@@ -1,0 +1,4 @@
+huggingface_hub
+diffusers[torch]
+datasets==2.16.0
+torch-fidelity
