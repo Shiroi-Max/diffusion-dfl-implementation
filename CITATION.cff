@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Diffusion DFL Implementation
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Maxim Utica Babyak
+    email: maxim.ub.work@gmail.com
+repository-code: 'https://github.com/Shiroi-Max/diffusion-dfl-implementation'
+abstract: Implementation for a diffuser in a DFL scenario.
+keywords:
+  - Diffuser
+  - AI
+  - Artificial Intelligence
+  - GenAI
+  - Generative AI
+  - DFL
+  - Decentralized Federated Learning
+license: MIT
+commit: e90af2f2e6bc99f81fb78c56ef6a050de8a8efde
+version: 1.0.0
+date-released: '2025-01-23'
