@@ -1,0 +1,17 @@
+train: true                           # Whether to train the model
+topology: ring                        # Topology name (used as folder name under topologies/)
+dataset: fashionmnist                 # Dataset name (used to load labels)
+threshold: 10                         # Minimum number of samples per label per node
+
+image_size: 32                        # Size of generated images
+train_batch_size: 128                 # Batch size per node
+num_epochs: 100                       # Total training epochs
+gradient_accumulation_steps: 1        # Gradient accumulation steps
+learning_rate: 0.0001                 # Learning rate
+lr_warmup_steps: 500                  # LR scheduler warmup steps
+save_epochs: 10                       # Save frequency (epochs)
+
+mixed_precision: fp16                 # Options: no | fp16
+num_processes: 1                      # Number of nodes (processes)
+device: cuda                          # Training device (cuda or cpu)
+overwrite_output_dir: false           # Whether to overwrite outputs

@@ -1,0 +1,8 @@
+train: false                      # This is an evaluation config
+topology: ring                    # Topology name (e.g. ring or custom)
+dataset: emnist_letters           # Dataset to evaluate
+threshold: 0                      # Minimum label threshold per node
+image_size: 32                    # Resolution used during training
+samples: 500                      # Total number of images to generate and evaluate
+device: cuda                      # Device to use (e.g. cuda or cpu)
+overwrite_output_dir: false       # Whether to overwrite previous evaluation outputs

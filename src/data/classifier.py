@@ -1,4 +1,12 @@
-"""Utilities for training and testing a simple CNN classifier on the dataset specified."""
+"""
+Utilities for training and testing a simple CNN classifier.
+
+This module provides utilities to:
+- Define and train a simple convolutional neural network (SimpleCNN)
+- Evaluate its accuracy on test data
+- Handle special preprocessing cases (e.g., EMNIST letters)
+- Save trained model weights
+"""
 
 import os
 from typing import Callable
@@ -7,11 +15,15 @@ import PIL
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
-from torchvision.datasets import EMNIST, MNIST, FashionMNIST
 from torchvision import transforms
+from torchvision.datasets import EMNIST, MNIST, FashionMNIST
 
 
 class SimpleCNN(nn.Module):
+    """
+    A simple convolutional neural network for image classification.
+    """
+
     def __init__(self, num_classes):
         super(SimpleCNN, self).__init__()
         self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1)
@@ -30,6 +42,10 @@ class SimpleCNN(nn.Module):
 
 
 class Classifier:
+    """
+    Base class for training and evaluating a CNN classifier on standard datasets.
+    """
+
     def __init__(self, root: str, dataset: str, device: str):
         self.root = root
         self.transform = self._transform_image
@@ -41,6 +57,9 @@ class Classifier:
         return transforms.ToTensor()(image).to(self.device)
 
     def _get_dataset(self) -> Callable:
+        """
+        Returns the corresponding torchvision dataset class.
+        """
         dataset_class_map = {
             "mnist": MNIST,
             "emnist": EMNIST,
@@ -53,6 +72,9 @@ class Classifier:
         return launch_class
 
     def _prepare_data(self, dataset: str) -> tuple:
+        """
+        Loads and returns train and test datasets.
+        """
         dataset_root = os.path.join(
             os.path.dirname(__file__), "..", "laboratory", "datasets"
         )
@@ -76,12 +98,17 @@ class Classifier:
         return train_dataset, test_dataset
 
     def _prepare_data_loader(self, train_dataset, test_dataset) -> tuple:
+        """
+        Returns data loaders for training and testing.
+        """
         train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-
         return train_loader, test_loader
 
     def _train(self, model, train_loader, criterion, optimizer, num_epochs):
+        """
+        Trains the model using cross-entropy loss and Adam optimizer.
+        """
         for epoch in range(num_epochs):
             model.train()
             running_loss = 0.0
@@ -98,6 +125,9 @@ class Classifier:
             print(f"Epoch {epoch + 1}, Loss: {running_loss / len(train_loader)}")
 
     def _evaluate(self, model, test_loader):
+        """
+        Evaluates the trained model on the test set and prints accuracy.
+        """
         model.eval()
         correct = 0
         total = 0
@@ -111,13 +141,15 @@ class Classifier:
         print(f"Accuracy: {100 * correct / total}%")
 
     def launch(self):
+        """
+        Main entrypoint to train and evaluate the model, and save it to disk.
+        """
         train_dataset, test_dataset = self._prepare_data("fashionmnist")
         train_loader, test_loader = self._prepare_data_loader(
             train_dataset, test_dataset
         )
 
         model = SimpleCNN(self.num_labels).to("cuda")
-
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -129,12 +161,15 @@ class Classifier:
 
 
 class AdjustedEMNIST(Dataset):
+    """
+    Wrapper around EMNIST dataset to adjust labels from 1–26 to 0–25 for 'letters' split.
+    """
+
     def __init__(self, emnist_dataset):
         self.emnist_dataset = emnist_dataset
 
     def __getitem__(self, index):
         img, label = self.emnist_dataset[index]
-        # Adjust the labels so they are in the range [0, 25]
         label -= 1
         return img, label
 
@@ -143,6 +178,10 @@ class AdjustedEMNIST(Dataset):
 
 
 class ClassifierEMNIST(Classifier):
+    """
+    Specialized classifier class for handling EMNIST (letters split).
+    """
+
     def _prepare_data(self, dataset: str) -> tuple:
         dataset_root = os.path.join(
             os.path.dirname(__file__), "..", "laboratory", "datasets"
@@ -163,16 +202,27 @@ class ClassifierEMNIST(Classifier):
             transform=self.transform,
             download=False,
         )
-        # Adjust the datasets
         adjusted_train_dataset = AdjustedEMNIST(train_dataset)
         adjusted_test_dataset = AdjustedEMNIST(test_dataset)
 
         self.num_labels = len(train_dataset.classes) - 1
-
         return adjusted_train_dataset, adjusted_test_dataset
 
 
 def get_classifier(dataset: str) -> Callable:
+    """
+    Returns the classifier class suitable for the given dataset.
+
+    Parameters
+    ----------
+    dataset : str
+        Name of the dataset (e.g., 'mnist', 'emnist_letters')
+
+    Returns
+    -------
+    Callable
+        A classifier class (Classifier or ClassifierEMNIST)
+    """
     complex_dataset_class_map = {
         "emnist": ClassifierEMNIST,
     }

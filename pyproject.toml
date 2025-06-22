@@ -1,0 +1,63 @@
+[project]
+name = "diffusion-dfl-implementation"
+version = "0.1.0"
+description = "Training diffusion models in Decentralized Federated Learning"
+authors = [
+    { name = "Maxim Utica Babyak", email = "maxim.ub.work@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.12"
+
+dependencies = [
+
+    # ===============================
+    # 🤖 Models and generation
+    # ===============================
+    "diffusers[torch]",       # Diffusion pipelines with built-in PyTorch support
+    "huggingface_hub",                # Hugging Face model hub and logging
+    "datasets",               # Dataset loading and processing
+
+    # ===============================
+    # ⚙️ Training and acceleration
+    # ===============================
+    "accelerate",             # Device-aware training (GPU/CPU)
+
+    # ===============================
+    # 🖼️ Image handling
+    # ===============================
+    "Pillow",                         # Required for PIL image operations
+
+    # ===============================
+    # 🔧 General utilities
+    # ===============================
+    "pyyaml",                         # Configuration parsing via YAML
+    "tqdm",                           # Progress bars
+]
+
+[project.optional-dependencies]
+
+# ===============================
+# ⚙️ Local development tools
+# ===============================
+dev = [
+    "ipykernel",               # Jupyter support
+    "ipywidgets"               # Widgets interactivos
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src.core", "src.data"]
+
+[tool.setuptools.package-dir]
+"" = "."
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+
+[tool.ruff]
+select = ["E", "F", "I"]
+line-length = 88
