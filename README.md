@@ -1,15 +1,44 @@
+---
+title: Diffusion Models in Decentralized Federated Learning  
+author: Maxim Utica Babyak  
+degree: Bachelor's in Computer Engineering  
+institution: Universidad de Murcia – Facultad de Informática  
+date: January 2025  
+license: MIT  
+built_with: Python 3.12  
+powered_by: PyTorch · Diffusers · Accelerate  
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="license" />
+  <img src="https://img.shields.io/badge/Built%20with-Python%203.12-blue.svg" alt="python" />
+  <img src="https://img.shields.io/badge/Powered%20by-PyTorch%20%7C%20Diffusers%20%7C%20Accelerate-orange.svg" alt="powered by" />
+</p>
+
+<p align="center">
+  <a href="docs/TFG_Utica_Maxim.pdf" download>
+    <img src="https://img.shields.io/badge/📘%20Download%20TFG-TFG_Utica_Maxim.pdf-blue" alt="Download TFG"/>
+  </a>
+</p>
+
+
 # Diffusion Models in Decentralized Federated Learning
 
-This repository contains a modular simulation environment for training and evaluating **Denoising Diffusion Probabilistic Models (DDPMs)** in **Decentralized Federated Learning (DFL)** scenarios. The system was developed as part of a Master's Thesis project focused on generative AI and distributed training.
+This repository contains a modular simulation environment for training and evaluating **Denoising Diffusion Probabilistic Models (DDPMs)** in **Decentralized Federated Learning (DFL)** scenarios. The system was developed as part of a Bachelors's Thesis project focused on generative AI and distributed training.
 
 ## 🧠 Project Overview
 
-**Title**: Implementation of Generative Diffusion Models in Decentralized Federated Learning
-**Author**: Maxim Utica Babyak
-**University**: Universidad de Murcia – Facultad de Informática
-**Date**: January 2025
+**Title**: Implementation of Generative Diffusion Models in Decentralized Federated Learning  
+**Author**: Maxim Utica Babyak  
+**Degree**: Bachelor's in Computer Engineering  
+**University**: Universidad de Murcia – Facultad de Informática  
+**Date**: January 2025  
+**Language**: Spanish  
 
 This project explores how diffusion models can enhance the performance of decentralized federated learning systems, improving convergence, privacy, and robustness under non-IID data distributions.
+
+You can read the full thesis here:  
+📘 [TFG_Utica_Maxim.pdf](docs/TFG_Utica_Maxim.pdf)
 
 ## 📌 Key Features
 
