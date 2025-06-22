@@ -1,14 +1,3 @@
----
-title: Diffusion Models in Decentralized Federated Learning  
-author: Maxim Utica Babyak  
-degree: Bachelor's in Computer Engineering  
-institution: Universidad de Murcia – Facultad de Informática  
-date: January 2025  
-license: MIT  
-built_with: Python 3.12  
-powered_by: PyTorch · Diffusers · Accelerate  
----
-
 <p align="center">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="license" />
   <img src="https://img.shields.io/badge/Built%20with-Python%203.12-blue.svg" alt="python" />
